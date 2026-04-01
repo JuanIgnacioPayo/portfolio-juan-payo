@@ -42,44 +42,27 @@ const ColorMap = {
 const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
   const Icon = IconMap[project.icon] || Globe;
   return (
-    <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-      <div className="h-48 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 z-20">
-          <span className="text-white font-medium flex items-center gap-2">
-            Ver Proyecto <ExternalLink size={16} />
-          </span>
+    <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col">
+      <div className="h-48 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 z-20 pointer-events-none">
+          {!isAdmin && (
+            <span className="text-white font-medium flex items-center gap-2">
+              Ver Proyecto <ExternalLink size={16} />
+            </span>
+          )}
         </div>
+        
         <div className="w-full h-full text-zinc-400 group-hover:scale-110 transition-transform duration-700">
-          {project.image ? (
-            <EditableImage 
-              src={project.image} 
-              alt={project.title} 
-              isAdmin={isAdmin}
-              storagePath="projects"
-              onUploadSuccess={(url) => onUpdate(`projects.${index}.image`, url)}
-              className="w-full h-full object-cover"
-            />
-          ) : isAdmin ? (
-            <div className="w-full h-full flex items-center justify-center relative">
-              <Icon size={48} />
-              <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity bg-black/10 flex items-center justify-center cursor-pointer" onClick={() => {/* Triggered by EditableImage hidden input? No, need better logic */}}>
-                <button className="bg-white/90 p-2 rounded-full shadow-sm text-zinc-900" onClick={(e) => {
-                  // This is a bit tricky since Icon has no image yet. 
-                  // I'll refactor slightly to ALWAYS show EditableImage if isAdmin.
-                }} />
-              </div>
-              {/* Fallback to simple icon but wrap in EditableImage */}
-              <EditableImage 
-                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" // Transparent pixel
-                alt="Upload Project Image"
-                isAdmin={isAdmin}
-                storagePath="projects"
-                onUploadSuccess={(url) => onUpdate(`projects.${index}.image`, url)}
-                className="absolute inset-0 z-10 opacity-0"
-              />
-            </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
+          <EditableImage 
+            src={project.image} 
+            alt={project.title} 
+            isAdmin={isAdmin}
+            storagePath="projects"
+            onUploadSuccess={(url) => onUpdate(`projects.${index}.image`, url)}
+            className="w-full h-full"
+          />
+          {!project.image && !isAdmin && (
+            <div className="absolute inset-0 flex items-center justify-center">
               <Icon size={48} />
             </div>
           )}

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Camera, Loader2, AlertCircle } from 'lucide-react';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 
@@ -12,43 +12,107 @@ const EditableImage = ({
   storagePath = "uploads" 
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Debug log to console when isAdmin changes
+  useEffect(() => {
+    if (isAdmin) {
+      console.log(`[EditableImage] Admin mode ACTIVE for: ${alt}`);
+    }
+  }, [isAdmin, alt]);
+
+  const handleTriggerClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (uploading) return;
+    
+    console.log("[EditableImage] Attempting to open file picker for:", alt);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    } else {
+      console.error("[EditableImage] fileInputRef is null!");
+    }
+  };
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    console.log("[EditableImage] File selected:", file.name);
     setUploading(true);
+    setError(null);
+    
     try {
-      const fileRef = storageRef(storage, `${storagePath}/${Date.now()}_${file.name}`);
+      const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      const fileRef = storageRef(storage, `${storagePath}/${fileName}`);
+      
+      console.log("[EditableImage] Starting upload to:", fileRef.fullPath);
       const snapshot = await uploadBytes(fileRef, file);
+      
+      console.log("[EditableImage] Upload complete, fetching URL...");
       const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      console.log("[EditableImage] Success! New URL:", downloadURL);
       onUploadSuccess(downloadURL);
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("[EditableImage] Upload error details:", error);
+      setError(error.message);
       alert("Error al subir la imagen: " + error.message);
     } finally {
       setUploading(false);
+      // Reset input to allow selecting the same file again if needed
+      if (e.target) e.target.value = '';
     }
   };
 
+  // If NOT admin, just return the image with its styles
   if (!isAdmin) {
     return <img src={src} alt={alt} className={className} />;
   }
 
   return (
-    <div className={`group relative cursor-pointer ${className}`} onClick={() => !uploading && fileInputRef.current?.click()}>
-      <img src={src} alt={alt} className={`w-full h-full object-cover transition-opacity ${uploading ? 'opacity-30' : 'group-hover:opacity-75'}`} />
+    <div 
+      className={`group relative cursor-pointer overflow-hidden ring-offset-2 hover:ring-2 hover:ring-violet-500 transition-all ${className}`} 
+      onClick={handleTriggerClick}
+      title="Hacer clic para cambiar imagen"
+    >
+      {src ? (
+        <img 
+          src={src} 
+          alt={alt} 
+          className={`w-full h-full object-cover transition-all duration-500 ${uploading ? 'opacity-30 scale-95 blur-sm' : 'group-hover:scale-105 group-hover:opacity-80'}`} 
+        />
+      ) : (
+        <div className="w-full h-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-[inherit]">
+           <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest">Sin Imagen</span>
+        </div>
+      )}
       
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-[inherit]">
+      <div className="absolute inset-0 flex items-center justify-center z-20">
         {uploading ? (
-          <Loader2 className="text-white animate-spin w-10 h-10" />
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="text-violet-600 animate-spin w-10 h-10" />
+            <span className="text-[10px] font-bold text-violet-600 uppercase tracking-tighter bg-white/80 px-2 py-1 rounded shadow-sm">Subiendo...</span>
+          </div>
+        ) : error ? (
+          <div className="bg-rose-500 p-2 rounded-full shadow-lg">
+            <AlertCircle className="text-white w-6 h-6" />
+          </div>
         ) : (
-          <div className="bg-white/90 p-3 rounded-full shadow-lg">
-            <Camera className="text-zinc-900 w-6 h-6" />
+          <div className="bg-white/90 dark:bg-zinc-900/90 p-4 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300 border border-zinc-200 dark:border-zinc-700">
+            <Camera className="text-zinc-900 dark:text-white w-6 h-6" />
           </div>
         )}
       </div>
+
+      {/* Persistent admin indicator badge */}
+      {!uploading && (
+        <div className="absolute top-3 right-3 z-30 bg-violet-600 text-white text-[8px] font-black uppercase px-2 py-1 rounded-md shadow-lg transform translate-y-[-20%] opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all">
+          Cambiar
+        </div>
+      )}
 
       <input 
         type="file" 
@@ -56,6 +120,7 @@ const EditableImage = ({
         onChange={handleFileChange} 
         className="hidden" 
         accept="image/*"
+        onClick={(e) => e.stopPropagation()} // Prevent double trigger
       />
     </div>
   );
