@@ -85,8 +85,7 @@ const AdminPanel = ({ content, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-zinc-950/80 backdrop-blur-sm flex justify-end">
-      <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-xl bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-zinc-200 dark:border-zinc-800">
         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold dark:text-white uppercase tracking-tighter">Admin Panel</h2>
@@ -136,9 +135,10 @@ const AdminPanel = ({ content, onClose }) => {
                 <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Biografía (Intro)</label>
                 <textarea rows="4" value={localContent.hero?.description} onChange={(e) => updateField('hero.description', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white resize-none" />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">URL Imagen de Perfil</label>
-                <input type="text" value={localContent.hero?.image} onChange={(e) => updateField('hero.image', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white font-mono text-sm" />
+              <div className="bg-violet-50 dark:bg-violet-950/20 p-4 rounded-2xl border border-violet-100 dark:border-violet-900/30">
+                <p className="text-sm text-violet-600 dark:text-violet-400 font-medium">
+                  📸 <b>Tip:</b> Para cambiar la foto de perfil, simplemente toca la imagen directamente en la pantalla de inicio.
+                </p>
               </div>
             </div>
           )}
@@ -172,9 +172,10 @@ const AdminPanel = ({ content, onClose }) => {
                         {iconOptions.map(opt => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
                       </select>
                     </div>
-                    <div className="col-span-2">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase">URL Imagen Proyecto (Opcional)</label>
-                      <input type="text" placeholder="https://..." value={proj.image || ""} onChange={(e) => updateNestedList('projects', idx, 'image', e.target.value)} className="text-xs bg-white dark:bg-zinc-900 px-3 py-2 rounded-xl w-full font-mono" />
+                    <div className="col-span-2 bg-zinc-100 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                      <p className="text-[10px] text-zinc-500">
+                        Hacer clic en la casilla del proyecto en la web para subir una imagen.
+                      </p>
                     </div>
                   </div>
                   <button onClick={() => removeItem('projects', idx)} className="absolute top-4 right-4 text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
@@ -267,7 +268,6 @@ const AdminPanel = ({ content, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
   );
 };
 
