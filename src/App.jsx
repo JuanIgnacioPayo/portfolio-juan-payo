@@ -19,6 +19,7 @@ import { db, auth, provider } from './firebase';
 import { ref, onValue, set } from 'firebase/database';
 import { signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import AdminPanel from './components/AdminPanel';
+import EditableImage from './components/EditableImage';
 
 const IconMap = {
   code2: Code2,
@@ -38,21 +39,49 @@ const ColorMap = {
   violet: { bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-600 dark:text-violet-400' }
 };
 
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
   const Icon = IconMap[project.icon] || Globe;
   return (
     <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-      <div className="h-48 overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative">
+      <div className="h-48 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 z-20">
           <span className="text-white font-medium flex items-center gap-2">
             Ver Proyecto <ExternalLink size={16} />
           </span>
         </div>
-        <div className="flex items-center justify-center h-full text-zinc-400 group-hover:scale-110 transition-transform duration-700">
+        <div className="w-full h-full text-zinc-400 group-hover:scale-110 transition-transform duration-700">
           {project.image ? (
-            <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+            <EditableImage 
+              src={project.image} 
+              alt={project.title} 
+              isAdmin={isAdmin}
+              storagePath="projects"
+              onUploadSuccess={(url) => onUpdate(`projects.${index}.image`, url)}
+              className="w-full h-full object-cover"
+            />
+          ) : isAdmin ? (
+            <div className="w-full h-full flex items-center justify-center relative">
+              <Icon size={48} />
+              <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity bg-black/10 flex items-center justify-center cursor-pointer" onClick={() => {/* Triggered by EditableImage hidden input? No, need better logic */}}>
+                <button className="bg-white/90 p-2 rounded-full shadow-sm text-zinc-900" onClick={(e) => {
+                  // This is a bit tricky since Icon has no image yet. 
+                  // I'll refactor slightly to ALWAYS show EditableImage if isAdmin.
+                }} />
+              </div>
+              {/* Fallback to simple icon but wrap in EditableImage */}
+              <EditableImage 
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" // Transparent pixel
+                alt="Upload Project Image"
+                isAdmin={isAdmin}
+                storagePath="projects"
+                onUploadSuccess={(url) => onUpdate(`projects.${index}.image`, url)}
+                className="absolute inset-0 z-10 opacity-0"
+              />
+            </div>
           ) : (
-            <Icon size={48} />
+            <div className="w-full h-full flex items-center justify-center">
+              <Icon size={48} />
+            </div>
           )}
         </div>
       </div>
@@ -204,10 +233,16 @@ function App() {
           <div className="order-1 md:order-2 flex justify-center">
             <div className="relative w-64 h-64 md:w-96 md:h-96">
               <div className="absolute inset-0 bg-violet-600 rounded-[3rem] rotate-6 scale-95 opacity-20 animate-pulse"></div>
-              <img 
+              <EditableImage 
                 src={content.hero?.image} 
                 alt="Juan Payo" 
-                className="relative z-10 w-full h-full object-cover rounded-[3rem] grayscale hover:grayscale-0 transition-all duration-700 shadow-2xl"
+                isAdmin={isAdminMode && isOwner}
+                storagePath="profiles"
+                onUploadSuccess={(url) => {
+                  const updated = { ...content, hero: { ...content.hero, image: url } };
+                  set(ref(db, 'content'), updated);
+                }}
+                className="relative z-10 w-full h-full object-cover rounded-[3rem] grayscale hover:grayscale-0 transition-all duration-700 shadow-2xl overflow-hidden"
               />
             </div>
           </div>
@@ -224,8 +259,21 @@ function App() {
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {content.projects?.map(project => (
-              <ProjectCard key={project.id} project={project} />
+            {content.projects?.map((project, idx) => (
+              <ProjectCard 
+                key={project.id} 
+                project={project} 
+                index={idx}
+                isAdmin={isAdminMode && isOwner}
+                onUpdate={(path, val) => {
+                  const updated = { ...content };
+                  const keys = path.split('.');
+                  let curr = updated;
+                  for(let i=0; i < keys.length - 1; i++) curr = curr[keys[i]];
+                  curr[keys[keys.length-1]] = val;
+                  set(ref(db, 'content'), updated);
+                }}
+              />
             ))}
           </div>
         </div>
