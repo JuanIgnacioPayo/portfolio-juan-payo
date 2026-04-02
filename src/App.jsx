@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { db, auth, provider } from './firebase';
 import { ref, onValue, set, push } from 'firebase/database';
-import { signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminPanel from './components/AdminPanel';
 import EditableImage from './components/EditableImage';
 
@@ -89,7 +89,51 @@ const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
             </span>
           ))}
         </div>
+        
+        {project.showPlayStore && project.playStoreUrl && (
+          <a 
+            href={project.playStoreUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="mt-6 flex items-center justify-center gap-2 bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 px-4 py-3 rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md w-full border border-zinc-800 dark:border-zinc-200"
+          >
+            <Smartphone size={16} /> Descargar en Play Store
+          </a>
+        )}
       </div>
+    </div>
+  );
+};
+
+const RotatingText = ({ texts }) => {
+  const [index, setIndex] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+  const currentTexts = (texts || []).filter(t => t && t.trim() !== "");
+  if (currentTexts.length === 0) currentTexts.push("");
+
+  useEffect(() => {
+    if (currentTexts.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setIsExiting(true);
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % currentTexts.length);
+        setIsExiting(false);
+      }, 500); // Duración de la animación de salida
+    }, 4000); // Cambiar cada 4 segundos
+
+    return () => clearInterval(interval);
+  }, [currentTexts]);
+
+  return (
+    <div className="relative h-8 overflow-hidden flex items-center justify-start min-w-[150px] md:min-w-[400px]">
+      <span
+        key={index}
+        className={`absolute left-0 text-[10px] md:text-xl font-bold tracking-tighter dark:text-white uppercase whitespace-nowrap ${isExiting ? 'animate-slide-fade-out' : 'animate-slide-fade-in'
+          }`}
+      >
+        {currentTexts[index]}
+      </span>
     </div>
   );
 };
@@ -100,44 +144,45 @@ function App() {
   const [formStatus, setFormStatus] = useState('idle'); // idle, loading, success, error
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [content, setContent] = useState({
-    nav: { logo: "" }, 
+    nav: { logo: "" },
     hero: {
-      name: "Juan Dev",
-      title: "Creando soluciones que optimizan tiempo y dinero.",
-      description: "Soy Juan Ignacio Payo.\nConstruyo aplicaciones escalables y con un diseño práctico.\nPongo el foco en optimizar los procesos que hacen ganar dinero y en delegarle a la maquina las tareas que hacen perder el tiempo.",
-      image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775065012/profiles/k84lrwm2wow509wgqlcr.png",
-      avatar: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775070144/profiles/chwvcvwx0ti90kxnm4qa.jpg"
+      name: "Juan Payo",
+      rotatingNames: null,
+      title: "",
+      description: "",
+      image: "",
+      avatar: ""
     },
     projects: [
-      { 
-        id: 1, 
-        title: "Página web de Salón de fiestas con sistema de gestión", 
-        description: "Sistema de gestión de clientes en tiempo real con integración de Firebase y analíticas avanzadas para equipos de ventas.", 
-        tag: "Fullstack", 
-        icon: "database", 
-        tech: ["React", "Firebase"], 
+      {
+        id: 1,
+        title: "",
+        description: "",
+        tag: "Fullstack",
+        icon: "database",
+        tech: ["React", "Firebase"],
         image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775077451/projects/fqhbccsefkzarmfgdqfs.png",
-        link: "#" 
+        link: "#"
       },
-      { 
-        id: 2, 
-        title: "Alerta en voz alta de transferencias recibidas", 
-        description: "Integración nativa para Android que permite recibir alertas de pago por transferencias en tiempo real y en voz alta. Ideal para comercios que como.kioskos o almacenes a los que les transfieren constantemente y son blanco fácil para estafadores con comprobantes falsos.", 
-        tag: "Mobile", 
-        icon: "smartphone", 
-        tech: ["Android", "Kotlin"], 
+      {
+        id: 2,
+        title: "",
+        description: "",
+        tag: "Mobile",
+        icon: "smartphone",
+        tech: ["Android", "Kotlin"],
         image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775077330/projects/era8gk5jmh8r3drpsypm.png",
-        link: "#" 
+        link: "#"
       },
-      { 
-        id: 3, 
-        title: "Página de presentación", 
-        description: "Todo tipo de páginas informativas simples para empresas o personas que quieran tener presencia en la web sin necesidades tan complejas.", 
-        tag: "Web App", 
-        icon: "globe", 
-        tech: ["HTML", "CMS"], 
+      {
+        id: 3,
+        title: "",
+        description: "",
+        tag: "Web App",
+        icon: "globe",
+        tech: ["HTML", "CMS"],
         image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775077692/projects/ez1datebws2u7ujhnkei.png",
-        link: "#" 
+        link: "#"
       }
     ],
     skills: [
@@ -149,7 +194,7 @@ function App() {
     contact: {
       title: "¿Tienes un proyecto en mente?",
       description: "Siempre estoy buscando nuevos retos y colaboraciones interesantes en el mundo del desarrollo.",
-      email: "elpatiodesalcedo@gmail.com",
+      email: "",
       showEmailInfo: false
     },
     social: {
@@ -205,6 +250,14 @@ function App() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setFormStatus('loading');
@@ -249,26 +302,53 @@ function App() {
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tighter dark:text-white uppercase">
-            {content.hero?.name || content.nav?.logo || "JUAN PAYO"}
-          </span>
+        <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+          <div className="flex-1 flex justify-start overflow-hidden">
+            <RotatingText texts={
+              content.hero?.rotatingNames
+                ? [content.hero.rotatingNames[0] || content.hero.name, ...(content.hero.rotatingNames.slice(1))]
+                : [content.hero?.name || content.nav?.logo || ""]
+            } />
+          </div>
+
           <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-600 dark:text-zinc-400">
             <a href="#inicio" className="hover:text-violet-600 transition-colors">Inicio</a>
             <a href="#proyectos" className="hover:text-violet-600 transition-colors">Proyectos</a>
             <a href="#contacto" className="hover:text-violet-600 transition-colors">Contacto</a>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 md:gap-3 ml-auto">
             {isOwner && (
               <button
                 onClick={() => setIsAdminMode(true)}
+                title="Configuración"
                 className="p-2 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-full hover:rotate-90 transition-all duration-500"
               >
-                <Settings size={20} />
+                <Settings className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             )}
-            <a href="#contacto" className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-5 py-2 rounded-full text-sm font-semibold hover:scale-105 transition-transform">
-              ¡Hablemos!
+
+            {user ? (
+              <button
+                onClick={handleLogout}
+                title="Cerrar Sesión"
+                className="p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full hover:text-rose-500 transition-colors"
+              >
+                <LogIn className="w-4 h-4 md:w-5 md:h-5 rotate-180" />
+              </button>
+            ) : (
+              <button
+                onClick={handleLogin}
+                title="Acceso Admin"
+                className="p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full hover:text-violet-600 transition-colors"
+              >
+                <LogIn className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+            )}
+
+            <a href="#contacto" className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 md:px-5 py-2 rounded-full text-xs md:text-sm font-semibold hover:scale-105 transition-transform whitespace-nowrap">
+              <span className="md:hidden">¡Chat!</span>
+              <span className="hidden md:inline">¡Hablemos!</span>
             </a>
           </div>
         </div>
@@ -319,7 +399,7 @@ function App() {
               <div className="absolute inset-0 bg-violet-600 rounded-[3rem] rotate-6 scale-95 opacity-20 animate-pulse"></div>
               <EditableImage
                 src={content.hero?.image}
-                alt={content.hero?.name || "Juan Payo"}
+                alt={content.hero?.name || ""}
                 isAdmin={isOwner}
                 storagePath="profiles"
                 onUploadSuccess={(url) => {

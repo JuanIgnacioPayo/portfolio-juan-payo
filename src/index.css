@@ -108,9 +108,42 @@ code,
   color: var(--text-h);
 }
 
+
 code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* Animación para el carrusel de nombres */
+@keyframes slide-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-fade-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+.animate-slide-fade-in {
+  animation: slide-fade-in 0.5s ease-out forwards;
+}
+
+.animate-slide-fade-out {
+  animation: slide-fade-out 0.5s ease-in forwards;
+}
+

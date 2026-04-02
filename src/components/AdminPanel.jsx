@@ -100,9 +100,12 @@ const AdminPanel = ({ content, onClose }) => {
   const addItem = (listKey, template) => {
     setLocalContent(prev => {
       const currentList = prev[listKey] || [];
+      const templateItem = listKey === 'projects' 
+        ? { ...template, showPlayStore: false, playStoreUrl: "" } 
+        : template;
       return {
         ...prev,
-        [listKey]: [...currentList, { ...template, id: Date.now() }]
+        [listKey]: [...currentList, { ...templateItem, id: Date.now() }]
       };
     });
   };
@@ -168,8 +171,29 @@ const AdminPanel = ({ content, onClose }) => {
           {activeTab === 'hero' && (
             <div className="space-y-6">
               <div className="group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Tu Nombre (Ej: Juan Payo)</label>
-                <input type="text" value={localContent.hero?.name} onChange={(e) => updateField('hero.name', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white font-bold" />
+                <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Nombre / Frase 1 (Ej: Juan Payo)</label>
+                <input type="text" value={localContent.hero?.rotatingNames?.[0] || localContent.hero?.name} onChange={(e) => {
+                  const current = [...(localContent.hero?.rotatingNames || [localContent.hero?.name, "", ""])];
+                  current[0] = e.target.value;
+                  updateField('hero.rotatingNames', current);
+                  updateField('hero.name', e.target.value);
+                }} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white font-bold" />
+              </div>
+              <div className="group">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Frase de Rotación 2</label>
+                <input type="text" value={localContent.hero?.rotatingNames?.[1] || ""} onChange={(e) => {
+                  const current = [...(localContent.hero?.rotatingNames || [localContent.hero?.name, "", ""])];
+                  current[1] = e.target.value;
+                  updateField('hero.rotatingNames', current);
+                }} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white font-medium" />
+              </div>
+              <div className="group">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Frase de Rotación 3</label>
+                <input type="text" value={localContent.hero?.rotatingNames?.[2] || ""} onChange={(e) => {
+                  const current = [...(localContent.hero?.rotatingNames || [localContent.hero?.name, "", ""])];
+                  current[2] = e.target.value;
+                  updateField('hero.rotatingNames', current);
+                }} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white font-medium" />
               </div>
               <div className="group">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Título Hero</label>
@@ -216,6 +240,34 @@ const AdminPanel = ({ content, onClose }) => {
                         {iconOptions.map(opt => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
                       </select>
                     </div>
+                    <div className="col-span-2 space-y-4 pt-2 border-t border-zinc-200 dark:border-zinc-700/50">
+                      <div className="flex items-center justify-between">
+                         <div>
+                           <label className="text-[10px] font-bold text-zinc-400 uppercase">Mostrar Play Store</label>
+                           <p className="text-[10px] text-zinc-500">Añade un botón de descarga a este proyecto.</p>
+                         </div>
+                         <button 
+                           onClick={() => updateNestedList('projects', idx, 'showPlayStore', !proj.showPlayStore)}
+                           className={`w-10 h-5 rounded-full transition-all relative ${proj.showPlayStore ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+                         >
+                           <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${proj.showPlayStore ? 'right-0.5' : 'left-0.5'}`}></div>
+                         </button>
+                      </div>
+                      
+                      {proj.showPlayStore && (
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase">Play Store URL</label>
+                          <input 
+                            type="text" 
+                            placeholder="https://play.google.com/store/apps/details?id=..."
+                            value={proj.playStoreUrl || ""} 
+                            onChange={(e) => updateNestedList('projects', idx, 'playStoreUrl', e.target.value)} 
+                            className="w-full text-xs bg-white dark:bg-zinc-950 p-3 rounded-xl mt-1 border border-zinc-100 dark:border-zinc-800 focus:ring-1 focus:ring-violet-500 outline-none" 
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="col-span-2 bg-zinc-100 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
                       <p className="text-[10px] text-zinc-500">
                         Hacer clic en la casilla del proyecto en la web para subir una imagen.

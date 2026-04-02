@@ -1,14 +1,14 @@
 {
   "rules": {
-    ".read": "true",
+    ".read": true,
     "content": {
-      ".write": "auth != null && auth.token.email === 'elpatiodesalcedo@gmail.com'"
+      ".write": "auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com'"
     },
     "messages": {
-      ".read": "auth != null && auth.token.email === 'elpatiodesalcedo@gmail.com'",
+      ".read": "auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com'",
       "$message_id": {
-        ".write": "(!data.exists() && newData.exists()) || (auth != null && auth.token.email === 'elpatiodesalcedo@gmail.com')",
-        ".validate": "!newData.exists() || newData.hasChildren(['name', 'email', 'message', 'timestamp'])"
+        ".write": "(!data.exists() && newData.exists()) || (auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com')",
+        ".validate": "!newData.exists() || (newData.hasChild('name') && newData.hasChild('email') && newData.hasChild('message') && newData.hasChild('timestamp'))"
       }
     }
   }
