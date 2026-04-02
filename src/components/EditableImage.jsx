@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Camera, Loader2, AlertCircle } from 'lucide-react';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
 
 const EditableImage = ({ 
   src, 
@@ -14,6 +12,9 @@ const EditableImage = ({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   // Debug log to console when isAdmin changes
   useEffect(() => {
@@ -45,17 +46,33 @@ const EditableImage = ({
     setError(null);
     
     try {
-      const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-      const fileRef = storageRef(storage, `${storagePath}/${fileName}`);
+      if (!cloudName || !uploadPreset) {
+        throw new Error("Cloudinary configuration missing in .env");
+      }
+
+      console.log("[EditableImage] Starting upload to Cloudinary...");
       
-      console.log("[EditableImage] Starting upload to:", fileRef.fullPath);
-      const snapshot = await uploadBytes(fileRef, file);
-      
-      console.log("[EditableImage] Upload complete, fetching URL...");
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      console.log("[EditableImage] Success! New URL:", downloadURL);
-      onUploadSuccess(downloadURL);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('folder', storagePath);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Error al subir a Cloudinary');
+      }
+
+      const data = await response.json();
+      console.log("[EditableImage] Success! New URL:", data.secure_url);
+      onUploadSuccess(data.secure_url);
     } catch (error) {
       console.error("[EditableImage] Upload error details:", error);
       setError(error.message);

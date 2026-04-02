@@ -3,6 +3,13 @@
     ".read": "true",
     "content": {
       ".write": "auth != null && auth.token.email === 'elpatiodesalcedo@gmail.com'"
+    },
+    "messages": {
+      ".read": "auth != null && auth.token.email === 'elpatiodesalcedo@gmail.com'",
+      "$message_id": {
+        ".write": "(!data.exists() && newData.exists()) || (auth != null && auth.token.email === 'elpatiodesalcedo@gmail.com')",
+        ".validate": "!newData.exists() || newData.hasChildren(['name', 'email', 'message', 'timestamp'])"
+      }
     }
   }
 }

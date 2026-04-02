@@ -16,10 +16,11 @@ import {
   Database,
   Code2,
   Cpu,
-  Monitor
+  Monitor,
+  Mail
 } from 'lucide-react';
 import { db, auth } from '../firebase';
-import { ref, set } from 'firebase/database';
+import { ref, set, onValue, remove } from 'firebase/database';
 import { signOut } from 'firebase/auth';
 
 const iconOptions = [
@@ -37,10 +38,29 @@ const AdminPanel = ({ content, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [localContent, setLocalContent] = useState(content);
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     setLocalContent(content);
   }, [content]);
+
+  useEffect(() => {
+    const messagesRef = ref(db, 'messages');
+    const unsub = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.entries(data).map(([id, val]) => ({
+          id,
+          ...val
+        })).sort((a, b) => b.timestamp - a.timestamp);
+        setMessages(list);
+      } else {
+        setMessages([]);
+      }
+    });
+
+    return () => unsub();
+  }, []);
 
   const handleSave = async () => {
     setLoading(true);
@@ -60,6 +80,9 @@ const AdminPanel = ({ content, onClose }) => {
     const updated = JSON.parse(JSON.stringify(localContent)); // Deep clone
     let current = updated;
     for (let i = 0; i < keys.length - 1; i++) {
+      if (!current[keys[i]]) {
+        current[keys[i]] = {}; // Create missing segments
+      }
       current = current[keys[i]];
     }
     current[keys[keys.length - 1]] = value;
@@ -67,25 +90,41 @@ const AdminPanel = ({ content, onClose }) => {
   };
 
   const updateNestedList = (listKey, index, field, value) => {
-    const updatedList = [...localContent[listKey]];
-    updatedList[index] = { ...updatedList[index], [field]: value };
-    setLocalContent(prev => ({ ...prev, [listKey]: updatedList }));
+    const updatedList = [...(localContent[listKey] || [])];
+    if (updatedList[index]) {
+      updatedList[index] = { ...updatedList[index], [field]: value };
+      setLocalContent(prev => ({ ...prev, [listKey]: updatedList }));
+    }
   };
 
   const addItem = (listKey, template) => {
-    setLocalContent(prev => ({
-      ...prev,
-      [listKey]: [...(prev[listKey] || []), { ...template, id: Date.now() }]
-    }));
+    setLocalContent(prev => {
+      const currentList = prev[listKey] || [];
+      return {
+        ...prev,
+        [listKey]: [...currentList, { ...template, id: Date.now() }]
+      };
+    });
   };
 
   const removeItem = (listKey, index) => {
-    const updatedList = localContent[listKey].filter((_, i) => i !== index);
+    const currentList = localContent[listKey] || [];
+    const updatedList = currentList.filter((_, i) => i !== index);
     setLocalContent(prev => ({ ...prev, [listKey]: updatedList }));
   };
 
+  const deleteMessage = async (e, id) => {
+    e.stopPropagation(); // Evitar que el clic afecte al panel de fondo
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este mensaje?")) return;
+    try {
+      await remove(ref(db, `messages/${id}`));
+    } catch (err) {
+      alert("Error al eliminar mensaje: " + err.message);
+    }
+  };
+
   return (
-    <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-xl bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-zinc-200 dark:border-zinc-800">
+    <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-xl bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-zinc-200 dark:border-zinc-800 overscroll-contain">
         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold dark:text-white uppercase tracking-tighter">Admin Panel</h2>
@@ -112,6 +151,7 @@ const AdminPanel = ({ content, onClose }) => {
             { id: 'projects', icon: Briefcase, label: 'Proyectos' },
             { id: 'skills', icon: Layers, label: 'Skills' },
             { id: 'contact', icon: MessageSquare, label: 'Contacto' },
+            { id: 'messages', icon: Mail, label: 'Mensajes' },
             { id: 'site', icon: Globe, label: 'Sitio' }
           ].map(tab => (
             <button 
@@ -128,6 +168,10 @@ const AdminPanel = ({ content, onClose }) => {
           {activeTab === 'hero' && (
             <div className="space-y-6">
               <div className="group">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Tu Nombre (Ej: Juan Payo)</label>
+                <input type="text" value={localContent.hero?.name} onChange={(e) => updateField('hero.name', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white font-bold" />
+              </div>
+              <div className="group">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Título Hero</label>
                 <input type="text" value={localContent.hero?.title} onChange={(e) => updateField('hero.title', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all dark:text-white" />
               </div>
@@ -137,7 +181,7 @@ const AdminPanel = ({ content, onClose }) => {
               </div>
               <div className="bg-violet-50 dark:bg-violet-950/20 p-4 rounded-2xl border border-violet-100 dark:border-violet-900/30">
                 <p className="text-sm text-violet-600 dark:text-violet-400 font-medium">
-                  📸 <b>Tip:</b> Para cambiar la foto de perfil, simplemente toca la imagen directamente en la pantalla de inicio.
+                  📸 <b>Tip:</b> Puedes cambiar tanto la foto principal como la circular directamente haciendo clic sobre ellas en la web.
                 </p>
               </div>
             </div>
@@ -221,6 +265,18 @@ const AdminPanel = ({ content, onClose }) => {
 
           {activeTab === 'contact' && (
             <div className="space-y-8">
+              <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl border border-zinc-100 dark:border-zinc-700 flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold dark:text-white">Información de Contacto Directo</h4>
+                  <p className="text-[10px] text-zinc-500">Muestra u oculta la caja con tu email en la web.</p>
+                </div>
+                <button 
+                  onClick={() => updateField('contact.showEmailInfo', localContent.contact?.showEmailInfo === false ? true : false)}
+                  className={`w-12 h-6 rounded-full transition-all relative ${localContent.contact?.showEmailInfo !== false ? 'bg-violet-600' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${localContent.contact?.showEmailInfo !== false ? 'left-7' : 'left-1'}`}></div>
+                </button>
+              </div>
               <div>
                 <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Título Contacto</label>
                 <input type="text" value={localContent.contact?.title} onChange={(e) => updateField('contact.title', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl dark:text-white text-xl font-bold" />
@@ -233,6 +289,44 @@ const AdminPanel = ({ content, onClose }) => {
                 <label className="text-[10px] font-bold text-zinc-500 uppercase mb-2 block">Bajada / Descripción Footer</label>
                 <textarea rows="3" value={localContent.contact?.description} onChange={(e) => updateField('contact.description', e.target.value)} className="w-full p-4 bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl dark:text-white resize-none" />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'messages' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Bandeja de Entrada ({messages.length})</h3>
+              </div>
+              
+              {messages.length === 0 ? (
+                <div className="py-20 text-center bg-zinc-50 dark:bg-zinc-800/30 rounded-[2rem] border border-dashed border-zinc-200 dark:border-zinc-800">
+                  <Mail className="mx-auto text-zinc-300 mb-4" size={48} />
+                  <p className="text-zinc-500 font-medium">No hay mensajes todavía.</p>
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div key={msg.id} className="p-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/50 rounded-3xl shadow-sm relative group hover:shadow-md transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="font-bold dark:text-white text-lg">{msg.name}</p>
+                        <p className="text-xs text-violet-600 dark:text-violet-400 font-mono">{msg.email}</p>
+                      </div>
+                      <span className="text-[10px] text-zinc-400 font-medium">
+                        {new Date(msg.timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border border-zinc-100 dark:border-zinc-800 italic">
+                      "{msg.message}"
+                    </div>
+                    <button 
+                      onClick={(e) => deleteMessage(e, msg.id)}
+                      className="absolute top-4 right-4 text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           )}
 

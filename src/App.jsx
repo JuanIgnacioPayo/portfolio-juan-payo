@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react';
-import { 
-  Github, 
-  Linkedin, 
-  Mail, 
-  ExternalLink, 
-  Code2, 
-  Layers, 
-  Cpu, 
+import {
+  Github,
+  Linkedin,
+  Mail,
+  ExternalLink,
+  Code2,
+  Layers,
+  Cpu,
   ChevronRight,
   Database,
   Smartphone,
   Globe,
   Settings,
   LogIn,
-  Monitor
+  Monitor,
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 import { db, auth, provider } from './firebase';
-import { ref, onValue, set } from 'firebase/database';
+import { ref, onValue, set, push } from 'firebase/database';
 import { signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import AdminPanel from './components/AdminPanel';
 import EditableImage from './components/EditableImage';
@@ -44,18 +46,18 @@ const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
   return (
     <div className="group bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col">
       <div className="h-48 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 z-20 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 z-10 pointer-events-none">
           {!isAdmin && (
             <span className="text-white font-medium flex items-center gap-2">
               Ver Proyecto <ExternalLink size={16} />
             </span>
           )}
         </div>
-        
-        <div className="w-full h-full text-zinc-400 group-hover:scale-110 transition-transform duration-700">
-          <EditableImage 
-            src={project.image} 
-            alt={project.title} 
+
+        <div className="w-full h-full text-zinc-400 relative z-20">
+          <EditableImage
+            src={project.image}
+            alt={project.title}
             isAdmin={isAdmin}
             storagePath="projects"
             onUploadSuccess={(url) => onUpdate(`projects.${index}.image`, url)}
@@ -95,30 +97,64 @@ const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
 function App() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [user, setUser] = useState(null);
+  const [formStatus, setFormStatus] = useState('idle'); // idle, loading, success, error
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [content, setContent] = useState({
-    nav: { logo: "JUAN PAYO" },
+    nav: { logo: "" }, 
     hero: {
-      title: "Creando experiencias digitales impactantes.",
-      description: "Hola, soy Juan Payo. Desarrollador fullstack especializado en construir aplicaciones web y móviles escalables, rápidas y con un diseño impecable.",
-      image: "/profile.png"
+      name: "Juan Dev",
+      title: "Creando soluciones que optimizan tiempo y dinero.",
+      description: "Soy Juan Ignacio Payo.\nConstruyo aplicaciones escalables y con un diseño práctico.\nPongo el foco en optimizar los procesos que hacen ganar dinero y en delegarle a la maquina las tareas que hacen perder el tiempo.",
+      image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775065012/profiles/k84lrwm2wow509wgqlcr.png",
+      avatar: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775070144/profiles/chwvcvwx0ti90kxnm4qa.jpg"
     },
     projects: [
-      { id: 1, title: "Avatar CRM", description: "Sistema de gestión...", tag: "Fullstack", icon: "database", tech: ["React", "Firebase"], link: "#" }
+      { 
+        id: 1, 
+        title: "Página web de Salón de fiestas con sistema de gestión", 
+        description: "Sistema de gestión de clientes en tiempo real con integración de Firebase y analíticas avanzadas para equipos de ventas.", 
+        tag: "Fullstack", 
+        icon: "database", 
+        tech: ["React", "Firebase"], 
+        image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775077451/projects/fqhbccsefkzarmfgdqfs.png",
+        link: "#" 
+      },
+      { 
+        id: 2, 
+        title: "Alerta en voz alta de transferencias recibidas", 
+        description: "Integración nativa para Android que permite recibir alertas de pago por transferencias en tiempo real y en voz alta. Ideal para comercios que como.kioskos o almacenes a los que les transfieren constantemente y son blanco fácil para estafadores con comprobantes falsos.", 
+        tag: "Mobile", 
+        icon: "smartphone", 
+        tech: ["Android", "Kotlin"], 
+        image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775077330/projects/era8gk5jmh8r3drpsypm.png",
+        link: "#" 
+      },
+      { 
+        id: 3, 
+        title: "Página de presentación", 
+        description: "Todo tipo de páginas informativas simples para empresas o personas que quieran tener presencia en la web sin necesidades tan complejas.", 
+        tag: "Web App", 
+        icon: "globe", 
+        tech: ["HTML", "CMS"], 
+        image: "https://res.cloudinary.com/dp6znoxry/image/upload/v1775077692/projects/ez1datebws2u7ujhnkei.png",
+        link: "#" 
+      }
     ],
     skills: [
       { id: 1, title: "Frontend", tech: "React, Next.js, Vue, TailwindCSS", icon: "code2", color: "blue" },
-      { id: 2, title: "Backend", tech: "Node.js, Firebase, Supabase", icon: "layers", color: "amber" },
-      { id: 3, title: "Mobile", tech: "React Native, Capacitor", icon: "smartphone", color: "emerald" },
+      { id: 2, title: "Backend", tech: "Node.js, Firebase", icon: "layers", color: "amber" },
+      { id: 3, title: "Mobile", tech: "React Native, Capacitor, Kotlin", icon: "smartphone", color: "emerald" },
       { id: 4, title: "DevOps", tech: "Docker, CI/CD, Git, Cloud", icon: "cpu", color: "rose" }
     ],
     contact: {
       title: "¿Tienes un proyecto en mente?",
       description: "Siempre estoy buscando nuevos retos y colaboraciones interesantes en el mundo del desarrollo.",
-      email: "elpatiodesalcedo@gmail.com"
+      email: "elpatiodesalcedo@gmail.com",
+      showEmailInfo: false
     },
     social: {
-      github: "https://github.com",
-      linkedin: "https://linkedin.com"
+      github: "https://github.com/",
+      linkedin: "https://linkedin.com/"
     }
   });
 
@@ -131,7 +167,15 @@ function App() {
     const unsubContent = onValue(ref(db, 'content'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setContent(data);
+        // Merge data with defaults to ensure missing sections (like 'contact') don't break the app
+        setContent(prev => ({
+          ...prev,
+          ...data,
+          nav: { ...prev.nav, ...data.nav },
+          hero: { ...prev.hero, ...data.hero },
+          contact: { ...prev.contact, ...data.contact },
+          social: { ...prev.social, ...data.social }
+        }));
       } else {
         set(ref(db, 'content'), content);
       }
@@ -143,6 +187,16 @@ function App() {
     };
   }, []);
 
+  // Lock scroll when Admin Panel is open
+  useEffect(() => {
+    if (isAdminMode) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isAdminMode]);
+
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -151,14 +205,45 @@ function App() {
     }
   };
 
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setFormStatus('loading');
+
+    try {
+      // 1. Save to Firebase backup
+      const messagesRef = ref(db, 'messages');
+      const newMessageRef = push(messagesRef);
+      await set(newMessageRef, {
+        ...formData,
+        timestamp: Date.now(),
+        read: false
+      });
+
+      // 2. Submit to Formspree (Optional - Replace 'YOUR_FORM_ID' when available)
+      // await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(formData)
+      // });
+
+      setFormStatus('success');
+      setFormData({ name: '', email: '', message: '' });
+      setTimeout(() => setFormStatus('idle'), 5000);
+    } catch (error) {
+      console.error("Submission failed:", error);
+      setFormStatus('error');
+      setTimeout(() => setFormStatus('idle'), 5000);
+    }
+  };
+
   const isOwner = user?.email === 'elpatiodesalcedo@gmail.com';
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 selection:bg-violet-200 dark:selection:bg-violet-500/30 overflow-x-hidden">
       {isAdminMode && isOwner && (
-        <AdminPanel 
-          content={content} 
-          onClose={() => setIsAdminMode(false)} 
+        <AdminPanel
+          content={content}
+          onClose={() => setIsAdminMode(false)}
         />
       )}
 
@@ -166,7 +251,7 @@ function App() {
       <nav className="fixed top-0 left-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-bold tracking-tighter dark:text-white uppercase">
-            {content.nav?.logo || "JUAN PAYO"}
+            {content.hero?.name || content.nav?.logo || "JUAN PAYO"}
           </span>
           <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-600 dark:text-zinc-400">
             <a href="#inicio" className="hover:text-violet-600 transition-colors">Inicio</a>
@@ -175,7 +260,7 @@ function App() {
           </div>
           <div className="flex items-center gap-4">
             {isOwner && (
-              <button 
+              <button
                 onClick={() => setIsAdminMode(true)}
                 className="p-2 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-full hover:rotate-90 transition-all duration-500"
               >
@@ -196,9 +281,25 @@ function App() {
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 dark:text-white leading-[1.1]">
               {content.hero?.title}
             </h1>
-            <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed max-w-xl">
-              {content.hero?.description}
-            </p>
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-10 group/avatar">
+              <div className="shrink-0 w-20 h-20 md:w-24 md:h-24 relative">
+                <div className="absolute inset-0 bg-violet-600 rounded-full scale-110 opacity-20 blur-md group-hover/avatar:opacity-40 transition-opacity"></div>
+                <EditableImage
+                  src={content.hero?.avatar}
+                  alt={content.hero?.name || "Avatar"}
+                  isAdmin={isOwner}
+                  storagePath="profiles"
+                  onUploadSuccess={(url) => {
+                    const updated = { ...content, hero: { ...content.hero, avatar: url } };
+                    set(ref(db, 'content'), updated);
+                  }}
+                  className="relative z-10 w-full h-full object-cover rounded-full border-4 border-white dark:border-zinc-900 shadow-xl overflow-hidden"
+                />
+              </div>
+              <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-xl">
+                {content.hero?.description}
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               <a href="#proyectos" className="group bg-violet-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-violet-700 transition-all shadow-lg shadow-violet-500/20">
                 Ver Proyectos <ChevronRight className="group-hover:translate-x-1 transition-transform" />
@@ -216,10 +317,10 @@ function App() {
           <div className="order-1 md:order-2 flex justify-center">
             <div className="relative w-64 h-64 md:w-96 md:h-96">
               <div className="absolute inset-0 bg-violet-600 rounded-[3rem] rotate-6 scale-95 opacity-20 animate-pulse"></div>
-              <EditableImage 
-                src={content.hero?.image} 
-                alt="Juan Payo" 
-                isAdmin={isAdminMode && isOwner}
+              <EditableImage
+                src={content.hero?.image}
+                alt={content.hero?.name || "Juan Payo"}
+                isAdmin={isOwner}
                 storagePath="profiles"
                 onUploadSuccess={(url) => {
                   const updated = { ...content, hero: { ...content.hero, image: url } };
@@ -243,17 +344,17 @@ function App() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {content.projects?.map((project, idx) => (
-              <ProjectCard 
-                key={project.id} 
-                project={project} 
+              <ProjectCard
+                key={project.id}
+                project={project}
                 index={idx}
-                isAdmin={isAdminMode && isOwner}
+                isAdmin={isOwner}
                 onUpdate={(path, val) => {
                   const updated = { ...content };
                   const keys = path.split('.');
                   let curr = updated;
-                  for(let i=0; i < keys.length - 1; i++) curr = curr[keys[i]];
-                  curr[keys[keys.length-1]] = val;
+                  for (let i = 0; i < keys.length - 1; i++) curr = curr[keys[i]];
+                  curr[keys[keys.length - 1]] = val;
                   set(ref(db, 'content'), updated);
                 }}
               />
@@ -281,27 +382,95 @@ function App() {
 
       {/* Contact Section */}
       <section id="contacto" className="py-20 px-6 bg-zinc-900 text-white rounded-t-[4rem]">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-8">{content.contact?.title}</h2>
-          <p className="text-zinc-400 text-lg mb-12">
-            {content.contact?.description}
-          </p>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            <a href={`mailto:${content.contact?.email}`} className="flex items-center gap-3 bg-white text-zinc-900 px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-transform">
-              <Mail size={20} /> {content.contact?.email}
-            </a>
-            {!user && (
-              <button 
-                onClick={handleLogin}
-                className="flex items-center gap-2 bg-zinc-800 text-zinc-400 px-6 py-4 rounded-2xl hover:bg-zinc-700 transition-all text-sm"
-              >
-                <LogIn size={18} /> Acceso Admin
-              </button>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 text-white">{content.contact?.title}</h2>
+            <p className="text-zinc-400 text-lg">
+              {content.contact?.description}
+            </p>
+          </div>
+
+          <div className={`grid ${content.contact?.showEmailInfo !== false ? 'md:grid-cols-2' : 'max-w-2xl mx-auto'} gap-12 items-start`}>
+            {content.contact?.showEmailInfo !== false && (
+              <div className="space-y-8">
+                <div className="bg-zinc-800/50 p-8 rounded-3xl border border-zinc-700/50">
+                  <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                    <Mail className="text-violet-500" /> Información de contacto
+                  </h3>
+                  <div className="space-y-4">
+                    <p className="text-zinc-400 text-sm">¿Prefieres enviar un correo directo?</p>
+                    <a href={`mailto:${content.contact?.email}`} className="text-lg font-semibold hover:text-violet-400 transition-colors block">
+                      {content.contact?.email}
+                    </a>
+                  </div>
+                </div>
+
+                {!user && (
+                  <div className="flex justify-center md:justify-start">
+                    <button
+                      onClick={handleLogin}
+                      className="flex items-center gap-2 bg-zinc-800 text-zinc-400 px-6 py-4 rounded-2xl hover:bg-zinc-700 transition-all text-sm"
+                    >
+                      <LogIn size={18} /> Acceso Admin
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
+
+            <form onSubmit={handleFormSubmit} className={`space-y-4 bg-white dark:bg-zinc-900 p-8 rounded-3xl shadow-2xl ${content.contact?.showEmailInfo === false ? 'w-full' : ''}`}>
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-2 ml-1">Nombre Completo</label>
+                <input
+                  required
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-4 bg-zinc-50 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all text-zinc-900 dark:text-white"
+                  placeholder="Tu nombre..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-2 ml-1">Correo Electrónico</label>
+                <input
+                  required
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-4 bg-zinc-50 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all text-zinc-900 dark:text-white"
+                  placeholder="email@ejemplo.com"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-2 ml-1">Tu Consulta</label>
+                <textarea
+                  required
+                  rows="4"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="w-full p-4 bg-zinc-50 dark:bg-zinc-800 border-none rounded-2xl focus:ring-2 focus:ring-violet-500 transition-all text-zinc-900 dark:text-white resize-none"
+                  placeholder="Cuéntame sobre tu proyecto..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={formStatus === 'loading'}
+                className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${formStatus === 'success' ? 'bg-emerald-500 text-white' :
+                  formStatus === 'error' ? 'bg-rose-500 text-white' :
+                    'bg-violet-600 text-white hover:bg-violet-700 shadow-violet-500/20'
+                  }`}
+              >
+                {formStatus === 'loading' ? <Loader2 className="animate-spin" /> :
+                  formStatus === 'success' ? <CheckCircle2 /> :
+                    formStatus === 'error' ? 'Error' : 'Enviar Mensaje'}
+                {formStatus === 'success' ? '¡Enviado!' : formStatus === 'idle' ? <ChevronRight size={18} /> : ''}
+              </button>
+            </form>
           </div>
           <div className="mt-20 pt-8 border-t border-zinc-800 text-zinc-500 text-sm flex justify-between items-center">
-            <p>© {new Date().getFullYear()} {content.nav?.logo}. Hecho con ❤️ y React.</p>
-            <p>Diseño premium para mentes ambiciosas.</p>
+            <p>© {new Date().getFullYear()} {content.nav?.logo}. Hecho con React.</p>
+            <p>Diseños premium para gente pragmática.</p>
           </div>
         </div>
       </section>
