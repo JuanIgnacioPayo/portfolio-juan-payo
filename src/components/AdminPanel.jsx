@@ -102,7 +102,7 @@ const AdminPanel = ({ content, onClose }) => {
     setLocalContent(prev => {
       const currentList = prev[listKey] || [];
       const templateItem = listKey === 'projects'
-        ? { ...template, showPlayStore: false, playStoreUrl: "" }
+        ? { ...template, showPlayStore: false, playStoreUrl: "", price: "" }
         : template;
       return {
         ...prev,
@@ -231,9 +231,13 @@ const AdminPanel = ({ content, onClose }) => {
                     <label className="text-[10px] font-bold text-zinc-400 uppercase">Descripción</label>
                     <textarea rows="2" value={proj.description} onChange={(e) => updateNestedList('projects', idx, 'description', e.target.value)} className="text-sm bg-transparent w-full text-zinc-500 border-none p-1 focus:ring-0 resize-none" />
                   </div>
-                  <div>
+                   <div>
                     <label className="text-[10px] font-bold text-zinc-400 uppercase">Tag</label>
                     <input type="text" value={proj.tag} onChange={(e) => updateNestedList('projects', idx, 'tag', e.target.value)} className="text-xs bg-white dark:bg-zinc-900 px-3 py-2 rounded-xl w-full" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Valor Proyecto</label>
+                    <input type="text" placeholder="Ej: $500, Consultar..." value={proj.price || ""} onChange={(e) => updateNestedList('projects', idx, 'price', e.target.value)} className="text-xs bg-white dark:bg-zinc-900 px-3 py-2 rounded-xl w-full" />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-zinc-400 uppercase">Icono</label>

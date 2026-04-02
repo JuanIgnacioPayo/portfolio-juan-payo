@@ -70,13 +70,18 @@ const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
           )}
         </div>
       </div>
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-xs font-semibold rounded-full uppercase tracking-wider">
+      <div className="p-6 flex-1">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <span className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-xs font-semibold rounded-full uppercase tracking-wider shrink-0">
             {project.tag}
           </span>
+          {project.price && (
+            <span className="text-xs font-bold text-zinc-900 dark:text-white tabular-nums opacity-80">
+              {project.price}
+            </span>
+          )}
         </div>
-        <h3 className="text-xl font-bold mb-2 dark:text-white group-hover:text-violet-600 transition-colors">
+        <h3 className="text-xl font-bold mb-2 dark:text-white group-hover:text-violet-600 transition-colors truncate">
           {project.title}
         </h3>
         <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed mb-6">
