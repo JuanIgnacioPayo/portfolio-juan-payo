@@ -89,11 +89,11 @@ const ProjectCard = ({ project, index, isAdmin, onUpdate }) => {
             </span>
           ))}
         </div>
-        
+
         {project.showPlayStore && project.playStoreUrl && (
-          <a 
-            href={project.playStoreUrl} 
-            target="_blank" 
+          <a
+            href={project.playStoreUrl}
+            target="_blank"
             rel="noopener noreferrer"
             className="mt-6 flex items-center justify-center gap-2 bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 px-4 py-3 rounded-xl text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md w-full border border-zinc-800 dark:border-zinc-200"
           >
@@ -146,7 +146,7 @@ function App() {
   const [content, setContent] = useState({
     nav: { logo: "" },
     hero: {
-      name: "Juan Payo",
+      name: "",
       rotatingNames: null,
       title: "",
       description: "",
@@ -272,12 +272,14 @@ function App() {
         read: false
       });
 
-      // 2. Submit to Formspree (Optional - Replace 'YOUR_FORM_ID' when available)
-      // await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
+      // 2. Submit to Formspree for Email Notifications
+      if (content.contact?.formspreeId) {
+        await fetch(`https://formspree.io/f/${content.contact.formspreeId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+      }
 
       setFormStatus('success');
       setFormData({ name: '', email: '', message: '' });
