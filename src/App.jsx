@@ -314,13 +314,13 @@ function App() {
             } />
           </div>
 
-          <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <div className="hidden md:flex flex-1 justify-center gap-8 text-sm font-medium text-zinc-600 dark:text-zinc-400">
             <a href="#inicio" className="hover:text-violet-600 transition-colors">Inicio</a>
             <a href="#proyectos" className="hover:text-violet-600 transition-colors">Proyectos</a>
             <a href="#contacto" className="hover:text-violet-600 transition-colors">Contacto</a>
           </div>
 
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 md:gap-3 ml-auto">
+          <div className="flex-1 flex items-center justify-end gap-2 md:gap-3">
             {isOwner && (
               <button
                 onClick={() => setIsAdminMode(true)}
@@ -369,7 +369,7 @@ function App() {
                 <div className="absolute inset-0 bg-violet-600 rounded-full scale-110 opacity-20 blur-md group-hover/avatar:opacity-40 transition-opacity"></div>
                 <EditableImage
                   src={content.hero?.avatar}
-                  alt={content.hero?.name || "Avatar"}
+                  alt={content.hero?.name || ""}
                   isAdmin={isOwner}
                   storagePath="profiles"
                   onUploadSuccess={(url) => {
@@ -552,7 +552,7 @@ function App() {
             </form>
           </div>
           <div className="mt-20 pt-8 border-t border-zinc-800 text-zinc-500 text-sm flex justify-between items-center">
-            <p>© {new Date().getFullYear()} {content.nav?.logo}. Hecho con React.</p>
+            <p>© {new Date().getFullYear()} Juan Payo. Hecho con React.</p>
             <p>Diseños premium para gente pragmática.</p>
           </div>
         </div>

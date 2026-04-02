@@ -17,7 +17,8 @@ import {
   Code2,
   Cpu,
   Monitor,
-  Mail
+  Mail,
+  ExternalLink
 } from 'lucide-react';
 import { db, auth } from '../firebase';
 import { ref, set, onValue, remove } from 'firebase/database';
@@ -330,23 +331,49 @@ const AdminPanel = ({ content, onClose }) => {
               </button>
             </div>
 
-            <div className="p-6 bg-violet-50 dark:bg-violet-950/20 rounded-3xl border border-violet-100 dark:border-violet-900/30 space-y-4">
+            <div className="p-6 bg-violet-50 dark:bg-violet-950/20 rounded-3xl border border-violet-100 dark:border-violet-900/30 space-y-6">
               <div>
                 <h4 className="text-sm font-bold text-violet-600 dark:text-violet-400">Notificaciones por Email</h4>
-                <p className="text-[10px] text-zinc-500 mb-4">Recibe un aviso al instante cuando alguien te escriba.</p>
+                <p className="text-[10px] text-zinc-500 mb-4 tracking-wide tracking-wide">Recibe un aviso al instante cuando alguien te escriba.</p>
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-violet-600 uppercase mb-2 block">Formspree ID</label>
-                <input
-                  type="text"
+              
+              <div className="space-y-4">
+                 <div className="flex gap-4">
+                   <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-violet-600 text-white text-[10px] font-bold">1</span>
+                   <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
+                     Registrate en <a href="https://formspree.io/" target="_blank" className="text-violet-600 hover:underline inline-flex items-center gap-1 font-bold">Formspree.io <ExternalLink size={10} /></a>
+                   </p>
+                 </div>
+                 
+                 <div className="flex gap-4">
+                   <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-violet-600 text-white text-[10px] font-bold">2</span>
+                   <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
+                     Crea un formulario y ve a la pestaña <b>"Settings"</b>.
+                   </p>
+                 </div>
+                 
+                 <div className="flex gap-4">
+                   <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-violet-600 text-white text-[10px] font-bold">3</span>
+                   <div className="space-y-2">
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
+                        Copia el <b>Form ID</b> (es el código final de tu endpoint).
+                      </p>
+                      <div className="p-2 bg-white dark:bg-zinc-950 rounded-lg border border-violet-100 dark:border-violet-900/30 text-[9px] font-mono text-zinc-400 break-all select-none opacity-60">
+                         https://formspree.io/f/<span className="text-violet-600 font-bold uppercase underline">tu-id-aqui</span>
+                      </div>
+                   </div>
+                 </div>
+              </div>
+
+              <div className="pt-2">
+                <label className="text-[10px] font-bold text-violet-600 uppercase mb-2 block">Pega tu Formspree ID aquí:</label>
+                <input 
+                  type="text" 
                   placeholder="Ej: mqkvvjqr"
-                  value={localContent.contact?.formspreeId || ""}
-                  onChange={(e) => updateField('contact.formspreeId', e.target.value)}
-                  className="w-full p-4 bg-white dark:bg-zinc-950 border border-violet-100 dark:border-violet-900/30 rounded-2xl dark:text-white font-mono text-sm uppercase"
+                  value={localContent.contact?.formspreeId || ""} 
+                  onChange={(e) => updateField('contact.formspreeId', e.target.value)} 
+                  className="w-full p-4 bg-white dark:bg-zinc-950 border border-violet-100 dark:border-violet-900/30 rounded-2xl dark:text-white font-mono text-sm uppercase tracking-widest focus:ring-2 focus:ring-violet-500 transition-all outline-none" 
                 />
-                <p className="text-[10px] text-zinc-400 mt-2">
-                  Crea un formulario en <a href="https://formspree.io/" target="_blank" className="text-violet-600 hover:underline">Formspree.io</a> y pega el ID aquí.
-                </p>
               </div>
             </div>
 
