@@ -195,7 +195,8 @@ function App() {
       title: "¿Tienes un proyecto en mente?",
       description: "Siempre estoy buscando nuevos retos y colaboraciones interesantes en el mundo del desarrollo.",
       email: "",
-      showEmailInfo: false
+      showEmailInfo: false,
+      formspreeId: "mzdkawbd"
     },
     social: {
       github: "https://github.com/",
