@@ -1,7 +1,7 @@
 {
   "rules": {
-    ".read": true,
     "content": {
+      ".read": true,
       ".write": "auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com'"
     },
     "messages": {
