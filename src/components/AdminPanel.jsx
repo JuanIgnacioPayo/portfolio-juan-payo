@@ -245,6 +245,10 @@ const AdminPanel = ({ content, onClose }) => {
                       {iconOptions.map(opt => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
                     </select>
                   </div>
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Tecnologías (separadas por coma)</label>
+                    <input type="text" placeholder="Ej: React, Firebase, Tailwind" value={(proj.tech || []).join(', ')} onChange={(e) => updateNestedList('projects', idx, 'tech', e.target.value.split(',').map(t => t.trim()).filter(t => t !== ""))} className="text-xs bg-white dark:bg-zinc-900 px-3 py-2 rounded-xl w-full" />
+                  </div>
                   <div className="col-span-2 space-y-4 pt-2 border-t border-zinc-200 dark:border-zinc-700/50">
                     <div className="flex items-center justify-between">
                       <div>
