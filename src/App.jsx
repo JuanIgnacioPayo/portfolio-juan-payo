@@ -17,11 +17,18 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react';
-import { db, auth, provider } from './firebase';
+import { app, db, auth, provider } from './firebase';
+import ApisDashboard from './playground/components/api-mashup-lab/ApisDashboard';
+import BillingCard from './playground/components/ai-billing-dashboard/BillingCard';
+import MarketingAdmin from './playground/components/ai-marketing-agent/MarketingAdmin';
+import ClavesAdmin from './playground/components/ai-key-manager/ClavesAdmin';
+import NoticiasAdmin from './playground/components/news-agent-automation/NoticiasAdmin';
 import { ref, onValue, set, push } from 'firebase/database';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminPanel from './components/AdminPanel';
 import EditableImage from './components/EditableImage';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const IconMap = {
   code2: Code2,
@@ -146,6 +153,7 @@ const RotatingText = ({ texts }) => {
 function App() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [user, setUser] = useState(null);
+  const [activePlaygroundTab, setActivePlaygroundTab] = useState('apis');
   const [formStatus, setFormStatus] = useState('idle'); // idle, loading, success, error
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [content, setContent] = useState({
@@ -301,6 +309,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 selection:bg-violet-200 dark:selection:bg-violet-500/30 overflow-x-hidden">
+      <ToastContainer position="bottom-right" theme="colored" />
       {isAdminMode && isOwner && (
         <AdminPanel
           content={content}
@@ -322,6 +331,7 @@ function App() {
           <div className="hidden md:flex flex-1 justify-center gap-8 text-sm font-medium text-zinc-600 dark:text-zinc-400">
             <a href="#inicio" className="hover:text-violet-600 transition-colors">Inicio</a>
             <a href="#proyectos" className="hover:text-violet-600 transition-colors">Proyectos</a>
+            <a href="#playground" className="hover:text-violet-600 transition-colors">Playground IA</a>
             <a href="#contacto" className="hover:text-violet-600 transition-colors">Contacto</a>
           </div>
 
@@ -447,6 +457,56 @@ function App() {
                 }}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Playground / Live AI Demos Section */}
+      <section id="playground" className="py-20 px-6 bg-zinc-100 dark:bg-zinc-950/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-left mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 dark:text-white flex items-center gap-3">
+              <Cpu className="text-violet-600" /> Playground de IA & Live Demos
+            </h2>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Explora en vivo mis mini-aplicaciones y herramientas autónomas impulsadas por Inteligencia Artificial.
+            </p>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex overflow-x-auto pb-4 gap-2 mb-8 no-scrollbar border-b border-zinc-200 dark:border-zinc-800">
+            {[
+              { id: 'apis', label: '🧪 API Mashup Lab' },
+              { id: 'billing', label: '📊 Billing & Tokens' },
+              { id: 'marketing', label: '📢 Marketing IA' },
+              { id: 'news', label: '📰 Agentes de Noticias' },
+              { id: 'keys', label: '🔑 Key Manager' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActivePlaygroundTab(tab.id)}
+                className={`px-6 py-3.5 rounded-2xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
+                  activePlaygroundTab === tab.id
+                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20 scale-105'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Render Active Component */}
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 md:p-8 shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 min-h-[500px]">
+            {activePlaygroundTab === 'apis' && <ApisDashboard firebaseApp={app} />}
+            {activePlaygroundTab === 'billing' && (
+              <div className="max-w-xl mx-auto">
+                <BillingCard firebaseApp={app} />
+              </div>
+            )}
+            {activePlaygroundTab === 'marketing' && <MarketingAdmin firebaseApp={app} />}
+            {activePlaygroundTab === 'news' && <NoticiasAdmin firebaseApp={app} />}
+            {activePlaygroundTab === 'keys' && <ClavesAdmin firebaseApp={app} />}
           </div>
         </div>
       </section>

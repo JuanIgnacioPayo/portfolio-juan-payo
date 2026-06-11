@@ -1,15 +1,17 @@
 {
   "rules": {
-    "content": {
-      ".read": true,
-      ".write": "auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com'"
+    "content": { ".read": true, ".write": "auth != null" },
+    "playground": { ".read": true, ".write": "auth != null" },
+    "newsStatus": { ".read": true, ".write": "auth != null" },
+    "agentStatus": { ".read": true, ".write": "auth != null" },
+    "usage_logs": { ".read": true, ".write": "auth != null" },
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     },
     "messages": {
-      ".read": "auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com'",
-      "$message_id": {
-        ".write": "(!data.exists() && newData.exists()) || (auth != null && auth.token.email == 'elpatiodesalcedo@gmail.com')",
-        ".validate": "!newData.exists() || (newData.hasChild('name') && newData.hasChild('email') && newData.hasChild('message') && newData.hasChild('timestamp'))"
-      }
+      ".read": "auth != null",
+      ".write": true
     }
   }
 }
