@@ -481,7 +481,7 @@ function App() {
               { id: 'marketing', label: '📢 Marketing IA' },
               { id: 'news', label: '📰 Agentes de Noticias' },
               { id: 'keys', label: '🔑 Key Manager' }
-            ].map(tab => (
+            ].filter(tab => tab.id !== 'keys' || isOwner).map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActivePlaygroundTab(tab.id)}
@@ -506,7 +506,7 @@ function App() {
             )}
             {activePlaygroundTab === 'marketing' && <MarketingAdmin firebaseApp={app} />}
             {activePlaygroundTab === 'news' && <NoticiasAdmin firebaseApp={app} />}
-            {activePlaygroundTab === 'keys' && <ClavesAdmin firebaseApp={app} />}
+            {activePlaygroundTab === 'keys' && isOwner && <ClavesAdmin firebaseApp={app} />}
           </div>
         </div>
       </section>
