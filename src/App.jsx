@@ -23,6 +23,7 @@ import BillingCard from './playground/components/ai-billing-dashboard/BillingCar
 import MarketingAdmin from './playground/components/ai-marketing-agent/MarketingAdmin';
 import ClavesAdmin from './playground/components/ai-key-manager/ClavesAdmin';
 import NoticiasAdmin from './playground/components/news-agent-automation/NoticiasAdmin';
+import ImageGenerator from './playground/components/ai-image-generator/ImageGenerator';
 import { ref, onValue, set, push } from 'firebase/database';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminPanel from './components/AdminPanel';
@@ -476,11 +477,12 @@ function App() {
           {/* Tabs */}
           <div className="flex overflow-x-auto pb-4 gap-2 mb-8 no-scrollbar border-b border-zinc-200 dark:border-zinc-800">
             {[
-              { id: 'apis', label: '🧪 API Mashup Lab' },
-              { id: 'billing', label: '📊 Billing & Tokens' },
-              { id: 'marketing', label: '📢 Marketing IA' },
-              { id: 'news', label: '📰 Agentes de Noticias' },
-              { id: 'keys', label: '🔑 Key Manager' }
+              { id: 'apis', label: '🧪 API Mashup Lab', description: 'Laboratorio de pruebas donde combinamos diferentes APIs públicas utilizando el razonamiento lógico de Gemini para generar resultados nuevos y sorprendentes.' },
+              { id: 'billing', label: '📊 Billing & Tokens', description: 'Panel de control en tiempo real que monitorea el uso de tokens de IA y estima los costos operativos de todas las aplicaciones del portafolio.' },
+              { id: 'marketing', label: '📢 Marketing IA', description: 'Agente autónomo diseñado para analizar tendencias y redactar automáticamente copys persuasivos para redes sociales como Instagram y Facebook.' },
+              { id: 'news', label: '📰 Agentes de Noticias', description: 'Sistema de agentes automatizados que buscan, filtran y resumen las noticias más relevantes de diversas fuentes web sin intervención humana.' },
+              { id: 'images', label: '🎨 Generador de Imágenes', description: 'Crea imágenes espectaculares al instante a partir de tus descripciones de texto utilizando la API gratuita de Pollinations AI.' },
+              { id: 'keys', label: '🔑 Key Manager', description: 'Panel de administración seguro para gestionar las credenciales y claves API utilizadas por los servicios de Inteligencia Artificial del portafolio.' }
             ].filter(tab => tab.id !== 'keys' || isOwner).map(tab => (
               <button
                 key={tab.id}
@@ -497,7 +499,22 @@ function App() {
           </div>
 
           {/* Render Active Component */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 md:p-8 shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 min-h-[500px]">
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 md:p-8 shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 min-h-[500px] flex flex-col">
+            {/* Tab Description Header */}
+            <div className="mb-6 p-4 bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-800/30 rounded-2xl">
+              <p className="text-zinc-600 dark:text-zinc-300 text-sm md:text-base leading-relaxed">
+                {[
+                  { id: 'apis', label: '🧪 API Mashup Lab', description: 'Laboratorio de pruebas donde combinamos diferentes APIs públicas utilizando el razonamiento lógico de Gemini para generar resultados nuevos y sorprendentes.' },
+                  { id: 'billing', label: '📊 Billing & Tokens', description: 'Panel de control en tiempo real que monitorea el uso de tokens de IA y estima los costos operativos de todas las aplicaciones del portafolio.' },
+                  { id: 'marketing', label: '📢 Marketing IA', description: 'Agente autónomo diseñado para analizar tendencias y redactar automáticamente copys persuasivos para redes sociales como Instagram y Facebook.' },
+                  { id: 'news', label: '📰 Agentes de Noticias', description: 'Sistema de agentes automatizados que buscan, filtran y resumen las noticias más relevantes de diversas fuentes web sin intervención humana.' },
+                  { id: 'images', label: '🎨 Generador de Imágenes', description: 'Crea imágenes espectaculares al instante a partir de tus descripciones de texto utilizando la API gratuita de Pollinations AI.' },
+                  { id: 'keys', label: '🔑 Key Manager', description: 'Panel de administración seguro para gestionar las credenciales y claves API utilizadas por los servicios de Inteligencia Artificial del portafolio.' }
+                ].find(t => t.id === activePlaygroundTab)?.description || ''}
+              </p>
+            </div>
+            
+            <div className="flex-1">
             {activePlaygroundTab === 'apis' && <ApisDashboard firebaseApp={app} />}
             {activePlaygroundTab === 'billing' && (
               <div className="max-w-xl mx-auto">
@@ -506,7 +523,9 @@ function App() {
             )}
             {activePlaygroundTab === 'marketing' && <MarketingAdmin firebaseApp={app} />}
             {activePlaygroundTab === 'news' && <NoticiasAdmin firebaseApp={app} />}
+            {activePlaygroundTab === 'images' && <ImageGenerator />}
             {activePlaygroundTab === 'keys' && isOwner && <ClavesAdmin firebaseApp={app} />}
+            </div>
           </div>
         </div>
       </section>
