@@ -1,6 +1,10 @@
+const dns = require('node:dns');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// FORZAR IPv4 PARA EVITAR PROBLEMAS DE RED EN FIREBASE (NODE 20)
+dns.setDefaultResultOrder('ipv4first');
 
 admin.initializeApp();
 
@@ -18,12 +22,12 @@ async function getGeminiApiKey() {
   return process.env.GEMINI_API_KEY;
 }
 
-exports.askAI = onCall({ cors: true }, async (request) => {
+exports.askAI = onCall({ cors: true, invoker: 'public' }, async (request) => {
   const { prompt } = request.data || {};
   try {
     const apiKey = await getGeminiApiKey();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt || "Hola");
     const text = result.response.text();
     return { response: text };
@@ -33,12 +37,12 @@ exports.askAI = onCall({ cors: true }, async (request) => {
   }
 });
 
-exports.generateMashupIdeas = onCall({ cors: true }, async (request) => {
+exports.generateMashupIdeas = onCall({ cors: true, invoker: 'public' }, async (request) => {
   const { selectedCompanies, userPrompt } = request.data || {};
   try {
     const apiKey = await getGeminiApiKey();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const companiesStr = (selectedCompanies || []).map(c => c.name).join(", ");
     const prompt = `Actúa como un Arquitecto de Software Experto. Crea una idea de integración (mashup) entre las siguientes empresas/APIs: ${companiesStr}.
@@ -74,12 +78,12 @@ Devuelve la respuesta ÚNICAMENTE en formato JSON válido con la siguiente estru
   }
 });
 
-exports.researchCompanyApis = onCall({ cors: true }, async (request) => {
+exports.researchCompanyApis = onCall({ cors: true, invoker: 'public' }, async (request) => {
   const { companyName, excludedApis } = request.data || {};
   try {
     const apiKey = await getGeminiApiKey();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const excludedStr = (excludedApis || []).length > 0 ? `Excluye las siguientes APIs que ya están listadas: ${(excludedApis || []).join(", ")}.` : '';
 
@@ -112,12 +116,12 @@ Devuelve la respuesta ÚNICAMENTE en formato JSON válido con la siguiente estru
   }
 });
 
-exports.generateMarketingPost = onCall({ cors: true }, async (request) => {
+exports.generateMarketingPost = onCall({ cors: true, invoker: 'public' }, async (request) => {
   const { imageUrl, instructions } = request.data || {};
   try {
     const apiKey = await getGeminiApiKey();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `Actúa como un Copywriter Experto en Redes Sociales y Marketing Digital. 
 Crea una publicación altamente atractiva y profesional para redes sociales teniendo en cuenta las siguientes instrucciones del cliente: "${instructions || 'Crear post promocional'}".
@@ -134,7 +138,7 @@ Escribe el texto listo para publicar, incluyendo emojis adecuados y hashtags rel
   }
 });
 
-exports.getBillingAmount = onCall({ cors: true }, async (request) => {
+exports.getBillingAmount = onCall({ cors: true, invoker: 'public' }, async (request) => {
   return {
     amount: "14.85",
     currencyCode: "USD",
@@ -156,8 +160,78 @@ exports.getBillingAmount = onCall({ cors: true }, async (request) => {
       { service: "Cloud Functions", amount: "2.80" }
     ],
     geminiBreakdown: [
-      { sku: "Gemini 1.5 Flash Input", amount: "3.20", usage: "42.6", unit: "M tokens" },
-      { sku: "Gemini 1.5 Flash Output", amount: "6.30", usage: "21.0", unit: "M tokens" }
+      { sku: "Gemini 2.5 Flash Input", amount: "3.20", usage: "42.6", unit: "M tokens" },
+      { sku: "Gemini 2.5 Flash Output", amount: "6.30", usage: "21.0", unit: "M tokens" }
     ]
   };
+});
+
+const https = require('https');
+
+exports.generateImageProxy = onCall({ cors: true, invoker: 'public', memory: '1GiB', timeoutSeconds: 120 }, async (request) => {
+  const { prompt } = request.data || {};
+  if (!prompt) {
+    throw new HttpsError('invalid-argument', 'El prompt es requerido.');
+  }
+
+  try {
+    const hfToken = process.env.HF_TOKEN || "";
+
+    // Usaremos el modelo FLUX.1-schnell
+    const modelId = "black-forest-labs/FLUX.1-schnell";
+    
+    console.log("Generando imagen con HuggingFace (https nativo) para prompt:", prompt);
+
+    const postData = JSON.stringify({ inputs: prompt });
+    const options = {
+      hostname: 'router.huggingface.co',
+      port: 443,
+      path: `/hf-inference/models/${modelId}`,
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${hfToken.trim()}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          let errData = '';
+          res.on('data', chunk => errData += chunk);
+          res.on('end', () => {
+            console.error("HF Error:", res.statusCode, errData);
+            reject(new HttpsError('internal', `Error en Hugging Face: ${res.statusCode}`));
+          });
+          return;
+        }
+
+        const chunks = [];
+        res.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+
+        res.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          const base64Image = buffer.toString('base64');
+          resolve({ 
+            imageBase64: `data:image/jpeg;base64,${base64Image}` 
+          });
+        });
+      });
+
+      req.on('error', (error) => {
+        console.error("Error en request https:", error);
+        reject(new HttpsError('internal', `Error de red: ${error.message}`));
+      });
+
+      req.write(postData);
+      req.end();
+    });
+
+  } catch (error) {
+    console.error("Error en generateImageProxy:", error);
+    throw new HttpsError('internal', error.message || 'Error al generar la imagen.');
+  }
 });

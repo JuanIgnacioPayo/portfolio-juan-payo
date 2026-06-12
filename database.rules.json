@@ -11,7 +11,9 @@
     },
     "messages": {
       ".read": "auth != null",
-      ".write": true
+      "$messageId": {
+        ".write": "!data.exists()"
+      }
     }
   }
 }

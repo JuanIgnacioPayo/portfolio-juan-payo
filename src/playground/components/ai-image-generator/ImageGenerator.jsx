@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Download, Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../../../firebase';
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
   const [error, setError] = useState('');
 
-  const generateImage = () => {
+  const generateImage = async () => {
     if (!prompt.trim()) {
       setError('Por favor ingresa una descripción para la imagen.');
       return;
@@ -15,23 +18,32 @@ export default function ImageGenerator() {
     setError('');
     setLoading(true);
     setImageUrl('');
+    setDownloadUrl('');
     
-    // Pollinations AI uses a simple GET request
-    const seed = Math.floor(Math.random() * 1000000);
-    const encodedPrompt = encodeURIComponent(prompt.trim());
-    const finalUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=1024&height=1024&nologo=true`;
-    
-    // Create an image object to preload and show loading spinner until it's ready
-    const img = new Image();
-    img.src = finalUrl;
-    img.onload = () => {
-      setImageUrl(finalUrl);
+    try {
+      const functions = getFunctions(app);
+      const generateFn = httpsCallable(functions, 'generateImageProxy');
+      const response = await generateFn({ prompt: prompt.trim() });
+      
+      const imageUrlData = response.data.imageBase64;
+      setImageUrl(imageUrlData);
+      setDownloadUrl(imageUrlData);
       setLoading(false);
-    };
-    img.onerror = () => {
-      setError('Ocurrió un error al generar la imagen. Intenta de nuevo.');
+      
+    } catch (err) {
+      console.error("Error al generar:", err);
+      setError("Error al generar la imagen. Verifica tu conexión o intenta con otra descripción.");
       setLoading(false);
-    };
+    }
+  };
+
+  const handleImageLoad = (e) => {
+    setLoading(false);
+  };
+
+  const handleImageError = () => {
+    setLoading(false);
+    setError("Error al cargar la imagen generada.");
   };
 
   return (
@@ -79,21 +91,37 @@ export default function ImageGenerator() {
 
       {/* Right Column: Preview */}
       <div className="w-full md:w-2/3 min-h-[400px] bg-zinc-100 dark:bg-zinc-800/30 rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 flex flex-col items-center justify-center overflow-hidden relative p-4">
-        {loading ? (
-          <div className="flex flex-col items-center gap-4 text-zinc-400">
-            <Loader2 className="w-12 h-12 animate-spin text-violet-500" />
-            <p className="animate-pulse">Pintando tu obra maestra...</p>
+        
+        {/* Placeholder inicial (sin imagen y sin cargar) */}
+        {!imageUrl && !loading && (
+          <div className="text-zinc-400 dark:text-zinc-600 flex flex-col items-center gap-3">
+            <ImageIcon className="w-16 h-16 opacity-50" />
+            <p>La imagen generada aparecerá aquí</p>
           </div>
-        ) : imageUrl ? (
-          <div className="relative group w-full h-full flex items-center justify-center">
+        )}
+
+        {/* Spinner de carga (se muestra siempre que loading sea true) */}
+        {loading && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 text-zinc-400 bg-zinc-100/80 dark:bg-zinc-800/80 backdrop-blur-sm">
+            <Loader2 className="w-12 h-12 animate-spin text-violet-500" />
+            <p className="animate-pulse font-medium">Pintando tu obra maestra...</p>
+          </div>
+        )}
+
+        {/* Contenedor de la imagen (se renderiza en el DOM para que dispare onLoad, pero se esconde si está cargando o hay error) */}
+        {imageUrl && (
+          <div className={`relative group w-full h-full flex items-center justify-center transition-opacity duration-500 ${(loading || error) ? 'opacity-0 hidden' : 'opacity-100'}`}>
             <img 
               src={imageUrl} 
               alt={prompt} 
+              crossOrigin="anonymous"
               className="max-w-full max-h-[500px] object-contain rounded-xl shadow-lg transition-transform duration-300 group-hover:scale-[1.02]"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
               <a
-                href={imageUrl}
+                href={downloadUrl || imageUrl}
                 download={`generada-${Date.now()}.jpg`}
                 target="_blank"
                 rel="noreferrer"
@@ -104,12 +132,23 @@ export default function ImageGenerator() {
               </a>
             </div>
           </div>
-        ) : (
-          <div className="text-zinc-400 dark:text-zinc-600 flex flex-col items-center gap-3">
-            <ImageIcon className="w-16 h-16 opacity-50" />
-            <p>La imagen generada aparecerá aquí</p>
+        )}
+
+        {error && !loading && (
+          <div className="text-zinc-600 dark:text-zinc-400 flex flex-col items-center justify-center gap-4 text-center p-6">
+            <div className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-xl border border-red-200 dark:border-red-800">
+              <p className="font-semibold mb-2">¡Ups! Hubo un error de conexión</p>
+              <p className="text-sm">El servidor de Inteligencia Artificial (Hugging Face) está muy ocupado en este momento o tardó demasiado en responder.</p>
+            </div>
+            <button
+              onClick={generateImage}
+              className="px-6 py-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white rounded-lg font-medium transition-colors"
+            >
+              Reintentar / Generar Nueva
+            </button>
           </div>
         )}
+
       </div>
     </div>
   );

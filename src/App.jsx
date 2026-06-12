@@ -377,11 +377,11 @@ function App() {
       <section id="inicio" className="pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div className="order-2 md:order-1 text-left">
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 dark:text-white leading-[1.1]">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight mb-6 dark:text-white leading-[1.1]">
               {content.hero?.title}
             </h1>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-10 group/avatar">
-              <div className="shrink-0 w-20 h-20 md:w-24 md:h-24 relative">
+              <div className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 relative">
                 <div className="absolute inset-0 bg-violet-600 rounded-full scale-110 opacity-20 blur-md group-hover/avatar:opacity-40 transition-opacity"></div>
                 <EditableImage
                   src={content.hero?.avatar}
@@ -487,7 +487,7 @@ function App() {
               <button
                 key={tab.id}
                 onClick={() => setActivePlaygroundTab(tab.id)}
-                className={`px-6 py-3.5 rounded-2xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 md:px-6 md:py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
                   activePlaygroundTab === tab.id
                     ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20 scale-105'
                     : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
@@ -499,7 +499,7 @@ function App() {
           </div>
 
           {/* Render Active Component */}
-          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 md:p-8 shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 min-h-[500px] flex flex-col">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl md:rounded-[2.5rem] p-4 sm:p-6 md:p-8 shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 min-h-[500px] flex flex-col">
             {/* Tab Description Header */}
             <div className="mb-6 p-4 bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-800/30 rounded-2xl">
               <p className="text-zinc-600 dark:text-zinc-300 text-sm md:text-base leading-relaxed">
